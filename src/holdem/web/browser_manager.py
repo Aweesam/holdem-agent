@@ -6,7 +6,8 @@ import time
 import random
 from typing import Optional, Dict, Any, List
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -19,18 +20,77 @@ from .human_behavior import HumanBehaviorSimulator
 class BrowserManager:
     """Manages browser instance with stealth capabilities."""
     
-    def __init__(self, headless: bool = False, user_data_dir: Optional[str] = None):
+    def __init__(self, headless: bool = False, user_data_dir: Optional[str] = None, browser_type: str = "firefox"):
         self.driver: Optional[webdriver.Chrome] = None
         self.behavior_sim = HumanBehaviorSimulator()
         self.headless = headless
         self.user_data_dir = user_data_dir
+        self.browser_type = browser_type.lower()
         self._setup_driver()
     
     def _setup_driver(self) -> None:
-        """Initialize Chrome driver with stealth settings."""
-        options = Options()
+        """Initialize browser driver with stealth settings."""
+        if self.browser_type == "firefox":
+            self._setup_firefox()
+        else:
+            self._setup_chrome()
+    
+    def _setup_firefox(self) -> None:
+        """Initialize Firefox driver with stealth settings."""
+        options = FirefoxOptions()
         
-        # Stealth settings to avoid detection
+        # Firefox stealth settings
+        if self.headless:
+            options.add_argument("--headless")
+        
+        # Randomize user agent (Firefox)
+        firefox_user_agents = [
+            "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/121.0",
+            "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/120.0",
+            "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/119.0"
+        ]
+        
+        # Firefox preferences for stealth
+        options.set_preference("dom.webdriver.enabled", False)
+        options.set_preference("useAutomationExtension", False)
+        options.set_preference("general.useragent.override", random.choice(firefox_user_agents))
+        
+        # Privacy and compatibility settings
+        options.set_preference("privacy.trackingprotection.enabled", False)
+        options.set_preference("network.cookie.cookieBehavior", 0)  # Accept all cookies
+        options.set_preference("network.cookie.lifetimePolicy", 0)  # Keep cookies until expire
+        options.set_preference("geo.enabled", True)  # Enable geolocation
+        options.set_preference("geo.provider.use_corelocation", True)
+        options.set_preference("geo.prompt.testing", True)
+        options.set_preference("geo.prompt.testing.allow", True)
+        
+        # Viewport randomization
+        viewports = [(1366, 768), (1920, 1080), (1440, 900), (1536, 864)]
+        viewport = random.choice(viewports)
+        options.add_argument(f"--width={viewport[0]}")
+        options.add_argument(f"--height={viewport[1]}")
+        
+        # Profile directory
+        if self.user_data_dir:
+            options.add_argument(f"--profile={self.user_data_dir}")
+        
+        try:
+            self.driver = webdriver.Firefox(options=options)
+            
+            # Set window size
+            self.driver.set_window_size(*viewport)
+            
+            # Additional Firefox stealth
+            self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+            
+        except Exception as e:
+            raise RuntimeError(f"Failed to initialize Firefox: {e}")
+    
+    def _setup_chrome(self) -> None:
+        """Initialize Chrome driver with stealth settings."""
+        options = ChromeOptions()
+        
+        # Chrome stealth settings to avoid detection
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-blink-features=AutomationControlled")
@@ -38,12 +98,12 @@ class BrowserManager:
         options.add_experimental_option('useAutomationExtension', False)
         
         # Randomize user agent
-        user_agents = [
+        chrome_user_agents = [
             "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
             "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
         ]
-        options.add_argument(f"--user-agent={random.choice(user_agents)}")
+        options.add_argument(f"--user-agent={random.choice(chrome_user_agents)}")
         
         # Viewport randomization
         viewports = [(1366, 768), (1920, 1080), (1440, 900), (1536, 864)]
@@ -59,8 +119,6 @@ class BrowserManager:
         # Additional privacy/stealth options
         options.add_argument("--disable-extensions")
         options.add_argument("--disable-plugins")
-        options.add_argument("--disable-images")  # Faster loading
-        options.add_argument("--disable-javascript")  # Can be enabled per-site if needed
         
         try:
             self.driver = webdriver.Chrome(options=options)
@@ -69,7 +127,7 @@ class BrowserManager:
             self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
             
         except Exception as e:
-            raise RuntimeError(f"Failed to initialize browser: {e}")
+            raise RuntimeError(f"Failed to initialize Chrome: {e}")
     
     def navigate_to_game(self, url: str) -> bool:
         """Navigate to the poker game URL with human-like behavior."""

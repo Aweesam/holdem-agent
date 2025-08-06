@@ -33,8 +33,9 @@ app.add_middleware(
 # Agent control models
 class AgentControlRequest(BaseModel):
     action: str  # "start", "stop", "pause", "resume"
-    site_url: Optional[str] = "https://clubwptgold.com/game/"
+    site_url: Optional[str] = None
     headless: Optional[bool] = True
+    token: Optional[str] = None
 
 class AgentStatusResponse(BaseModel):
     status: str
@@ -65,7 +66,7 @@ class LiveAgentState:
         if websocket in self.websocket_connections:
             self.websocket_connections.remove(websocket)
     
-    async def start_agent(self, site_url: str = "https://clubwptgold.com/game/", headless: bool = True):
+    async def start_agent(self, site_url: str = None, headless: bool = True, token: str = None):
         """Start the poker agent."""
         if self.is_agent_running:
             return False, "Agent is already running"
@@ -75,7 +76,7 @@ class LiveAgentState:
             self.agent.register_dashboard_callback(self.agent_update_callback)
             
             # Start agent in background task
-            asyncio.create_task(self.agent.start(headless=headless, site_url=site_url))
+            asyncio.create_task(self.agent.start(headless=headless, site_url=site_url, token=token))
             
             self.is_agent_running = True
             self.start_time = datetime.now()
@@ -232,7 +233,7 @@ async def health_check():
 async def control_agent(request: AgentControlRequest):
     """Control agent (start/stop/pause/resume)."""
     if request.action == "start":
-        success, message = await live_agent_state.start_agent(request.site_url, request.headless)
+        success, message = await live_agent_state.start_agent(request.site_url, request.headless, request.token)
         status = "started" if success else "error"
     elif request.action == "stop":
         success, message = await live_agent_state.stop_agent()

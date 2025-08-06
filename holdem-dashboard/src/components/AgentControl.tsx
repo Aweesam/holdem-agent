@@ -20,8 +20,9 @@ export default function AgentControl({ isConnected }: AgentControlProps) {
     uptime_seconds: 0
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [siteUrl, setSiteUrl] = useState('https://clubwptgold.com/game/');
-  const [headless, setHeadless] = useState(true);
+  const [siteUrl, setSiteUrl] = useState('');
+  const [headless, setHeadless] = useState(false); // Changed to false for manual login
+  const [token, setToken] = useState('');
   const [showSettings, setShowSettings] = useState(false);
 
   // Poll agent status
@@ -57,8 +58,9 @@ export default function AgentControl({ isConnected }: AgentControlProps) {
         },
         body: JSON.stringify({
           action,
-          site_url: siteUrl,
-          headless: headless
+          site_url: siteUrl || null,
+          headless: headless,
+          token: token || null
         }),
       });
 
@@ -168,16 +170,36 @@ export default function AgentControl({ isConnected }: AgentControlProps) {
           <div className="space-y-3">
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
-                Poker Site URL
+                Authentication Token (optional)
+              </label>
+              <input
+                type="text"
+                value={token}
+                onChange={(e) => setToken(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                placeholder="b0c7dc07cd9be19dfceeeb4097f91328e7fa61239f117bc31ca42ef3a43053ba"
+                disabled={isAgentRunning}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                64-character hex token from game URL. Leave empty for manual login.
+              </p>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                Game URL with Token (optional)
               </label>
               <input
                 type="text"
                 value={siteUrl}
                 onChange={(e) => setSiteUrl(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="https://clubwptgold.com/game/"
+                placeholder="https://clubwptgold.com/game/?token=...&profile=pg"
                 disabled={isAgentRunning}
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Complete game URL with token and profile. Leave empty for manual login.
+              </p>
             </div>
             
             <div className="flex items-center gap-2">
@@ -190,7 +212,7 @@ export default function AgentControl({ isConnected }: AgentControlProps) {
                 disabled={isAgentRunning}
               />
               <label htmlFor="headless" className="text-sm text-gray-600">
-                Run in headless mode (no browser window)
+                Run in headless mode (recommended: OFF for first login)
               </label>
             </div>
           </div>
@@ -239,6 +261,21 @@ export default function AgentControl({ isConnected }: AgentControlProps) {
         )}
       </div>
 
+      {/* Instructions and Warnings */}
+      {!isAgentRunning && (
+        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+          <p className="text-sm text-blue-700 font-medium mb-2">
+            🎯 Club WPT Gold Setup Instructions:
+          </p>
+          <ul className="text-sm text-blue-700 space-y-1">
+            <li>• <strong>Option 1:</strong> Provide token or full game URL above</li>
+            <li>• <strong>Option 2:</strong> Leave empty, agent will open Firefox for manual login</li>
+            <li>• <strong>Browser:</strong> Using Firefox (works better than Chrome)</li>
+            <li>• <strong>First time:</strong> Disable headless mode to see login process</li>
+          </ul>
+        </div>
+      )}
+      
       {/* Connection Warning */}
       {!isConnected && (
         <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">

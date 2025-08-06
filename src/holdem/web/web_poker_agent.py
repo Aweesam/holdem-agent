@@ -16,6 +16,7 @@ from ..game import GameState, Action, ActionType
 from .browser_manager import BrowserManager
 from .human_behavior import HumanBehaviorSimulator
 from .network_interceptor import ClubWPTNetworkInterceptor, GameStateParser, GameStateMessage
+from .token_manager import ClubWPTTokenManager, TokenExtractor
 
 
 class AgentStatus(Enum):
@@ -108,6 +109,7 @@ class WebPokerAgent(BaseAgent):
         self.network_interceptor: Optional[ClubWPTNetworkInterceptor] = None
         self.game_parser = GameStateParser()
         self.behavior_sim = HumanBehaviorSimulator()
+        self.token_manager = ClubWPTTokenManager()
         
         # Statistics and reporting
         self.stats = AgentStats()
@@ -129,23 +131,36 @@ class WebPokerAgent(BaseAgent):
         """Register callback for dashboard updates."""
         self.dashboard_callbacks.append(callback)
     
-    async def start(self, headless: bool = False, site_url: str = "https://clubwptgold.com/game/"):
+    async def start(self, headless: bool = False, site_url: str = None, token: str = None):
         """Start the web poker agent."""
         try:
             self.stats.status = AgentStatus.CONNECTING
+            self.stats.last_action = "Initializing Firefox browser..."
             self._notify_dashboard()
             
-            # Initialize browser
-            self.browser_manager = BrowserManager(headless=headless)
+            # Initialize Firefox browser (works better with Club WPT Gold)
+            self.browser_manager = BrowserManager(headless=headless, browser_type="firefox")
+            
+            # Handle token and URL
+            game_url = await self._prepare_game_url(site_url, token)
+            if not game_url:
+                self.stats.status = AgentStatus.ERROR
+                self.stats.last_action = "Failed to get valid game URL with token"
+                self._notify_dashboard()
+                return
             
             # Initialize network interceptor
             self.network_interceptor = ClubWPTNetworkInterceptor(int(self.player_id))
             self.network_interceptor.set_game_state_callback(self._handle_network_message)
             
             # Navigate to poker site
-            if await self._navigate_to_site(site_url):
+            self.stats.last_action = f"Navigating to {game_url[:50]}..."
+            self._notify_dashboard()
+            
+            if await self._navigate_to_site(game_url):
                 self.stats.status = AgentStatus.CONNECTED
                 self.stats.active_tables = 1
+                self.stats.last_action = "Connected to Club WPT Gold"
                 self._notify_dashboard()
                 
                 # Start network monitoring
@@ -156,12 +171,47 @@ class WebPokerAgent(BaseAgent):
                 await self._main_game_loop()
             else:
                 self.stats.status = AgentStatus.ERROR
+                self.stats.last_action = "Failed to navigate to poker site"
                 self._notify_dashboard()
                 
         except Exception as e:
             self.stats.status = AgentStatus.ERROR
+            self.stats.last_action = f"Agent start error: {e}"
             print(f"Agent start error: {e}")
             self._notify_dashboard()
+    
+    async def _prepare_game_url(self, site_url: str = None, token: str = None) -> Optional[str]:
+        """Prepare the complete game URL with token."""
+        try:
+            if token:
+                # Token provided directly
+                if self.token_manager.set_token(token):
+                    return self.token_manager.get_game_url()
+            
+            if site_url and "token=" in site_url:
+                # URL with token provided
+                extracted_token = self.token_manager.extract_token_from_url(site_url)
+                if extracted_token:
+                    return site_url
+            
+            # No valid token - need to get one interactively
+            print("🔐 No valid token provided. Starting manual login process...")
+            
+            # Navigate to login page first
+            self.browser_manager.navigate_to_game("https://clubwptgold.com/login")
+            
+            # Wait for user to log in and get to game page
+            token = TokenExtractor.wait_for_login_and_extract(self.browser_manager, timeout=300)
+            
+            if token:
+                self.token_manager.set_token(token)
+                return self.token_manager.get_game_url()
+            
+            return None
+            
+        except Exception as e:
+            print(f"Error preparing game URL: {e}")
+            return None
     
     async def _navigate_to_site(self, url: str) -> bool:
         """Navigate to poker site with human-like behavior."""
