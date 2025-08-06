@@ -35,7 +35,6 @@ class AgentControlRequest(BaseModel):
     action: str  # "start", "stop", "pause", "resume"
     site_url: Optional[str] = None
     headless: Optional[bool] = True
-    token: Optional[str] = None
 
 class AgentStatusResponse(BaseModel):
     status: str
@@ -66,7 +65,7 @@ class LiveAgentState:
         if websocket in self.websocket_connections:
             self.websocket_connections.remove(websocket)
     
-    async def start_agent(self, site_url: str = None, headless: bool = True, token: str = None):
+    async def start_agent(self, site_url: str = None, headless: bool = True):
         """Start the poker agent."""
         if self.is_agent_running:
             return False, "Agent is already running"
@@ -75,14 +74,14 @@ class LiveAgentState:
             self.agent = WebPokerAgent()
             self.agent.register_dashboard_callback(self.agent_update_callback)
             
-            # Start agent in background task
-            asyncio.create_task(self.agent.start(headless=headless, site_url=site_url, token=token))
+            # Start agent in background task - simplified, no token needed
+            asyncio.create_task(self.agent.start(headless=headless, site_url=site_url))
             
             self.is_agent_running = True
             self.start_time = datetime.now()
             
             await self.broadcast_update()
-            return True, "Agent started successfully"
+            return True, "Agent started - Firefox will open for manual login"
             
         except Exception as e:
             return False, f"Failed to start agent: {e}"
@@ -233,7 +232,7 @@ async def health_check():
 async def control_agent(request: AgentControlRequest):
     """Control agent (start/stop/pause/resume)."""
     if request.action == "start":
-        success, message = await live_agent_state.start_agent(request.site_url, request.headless, request.token)
+        success, message = await live_agent_state.start_agent(request.site_url, request.headless)
         status = "started" if success else "error"
     elif request.action == "stop":
         success, message = await live_agent_state.stop_agent()

@@ -20,8 +20,8 @@ export default function AgentControl({ isConnected }: AgentControlProps) {
     uptime_seconds: 0
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [siteUrl, setSiteUrl] = useState('');
-  const [headless, setHeadless] = useState(false); // Changed to false for manual login
+  const [siteUrl, setSiteUrl] = useState('https://clubwptgold.com/');
+  const [headless, setHeadless] = useState(false); // False for manual login
   const [token, setToken] = useState('');
   const [showSettings, setShowSettings] = useState(false);
 
@@ -170,35 +170,18 @@ export default function AgentControl({ isConnected }: AgentControlProps) {
           <div className="space-y-3">
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
-                Authentication Token (optional)
-              </label>
-              <input
-                type="text"
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
-                placeholder="b0c7dc07cd9be19dfceeeb4097f91328e7fa61239f117bc31ca42ef3a43053ba"
-                disabled={isAgentRunning}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                64-character hex token from game URL. Leave empty for manual login.
-              </p>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">
-                Game URL with Token (optional)
+                Poker Site URL
               </label>
               <input
                 type="text"
                 value={siteUrl}
                 onChange={(e) => setSiteUrl(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="https://clubwptgold.com/game/?token=...&profile=pg"
+                placeholder="https://clubwptgold.com/"
                 disabled={isAgentRunning}
               />
               <p className="text-xs text-gray-500 mt-1">
-                Complete game URL with token and profile. Leave empty for manual login.
+                Website where agent will open Firefox for you to log in manually.
               </p>
             </div>
             
@@ -212,7 +195,7 @@ export default function AgentControl({ isConnected }: AgentControlProps) {
                 disabled={isAgentRunning}
               />
               <label htmlFor="headless" className="text-sm text-gray-600">
-                Run in headless mode (recommended: OFF for first login)
+                Run in headless mode (turn OFF to see browser window)
               </label>
             </div>
           </div>
@@ -265,14 +248,18 @@ export default function AgentControl({ isConnected }: AgentControlProps) {
       {!isAgentRunning && (
         <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
           <p className="text-sm text-blue-700 font-medium mb-2">
-            🎯 Club WPT Gold Setup Instructions:
+            🎯 How GrandpaJoe42 Works:
           </p>
-          <ul className="text-sm text-blue-700 space-y-1">
-            <li>• <strong>Option 1:</strong> Provide token or full game URL above</li>
-            <li>• <strong>Option 2:</strong> Leave empty, agent will open Firefox for manual login</li>
-            <li>• <strong>Browser:</strong> Using Firefox (works better than Chrome)</li>
-            <li>• <strong>First time:</strong> Disable headless mode to see login process</li>
-          </ul>
+          <ol className="text-sm text-blue-700 space-y-1">
+            <li>1. <strong>Agent opens Firefox</strong> and navigates to Club WPT Gold</li>
+            <li>2. <strong>You log in manually</strong> (SMS verification, etc.)</li>
+            <li>3. <strong>You select a poker table</strong> to play</li>
+            <li>4. <strong>Agent detects table</strong> and takes over gameplay automatically</li>
+            <li>5. <strong>Dashboard shows live stats</strong> as GrandpaJoe42 plays</li>
+          </ol>
+          <p className="text-sm text-blue-600 mt-2">
+            💡 <strong>Tip:</strong> Keep headless mode OFF to see the browser window
+          </p>
         </div>
       )}
       

@@ -141,37 +141,32 @@ class WebPokerAgent(BaseAgent):
             # Initialize Firefox browser (works better with Club WPT Gold)
             self.browser_manager = BrowserManager(headless=headless, browser_type="firefox")
             
-            # Handle token and URL
-            game_url = await self._prepare_game_url(site_url, token)
-            if not game_url:
-                self.stats.status = AgentStatus.ERROR
-                self.stats.last_action = "Failed to get valid game URL with token"
-                self._notify_dashboard()
-                return
+            # Use provided URL or default to Club WPT Gold
+            target_url = site_url if site_url else "https://clubwptgold.com/"
             
-            # Initialize network interceptor
-            self.network_interceptor = ClubWPTNetworkInterceptor(int(self.player_id))
-            self.network_interceptor.set_game_state_callback(self._handle_network_message)
-            
-            # Navigate to poker site
-            self.stats.last_action = f"Navigating to {game_url[:50]}..."
+            # Navigate to poker site for user login
+            self.stats.last_action = f"Opening {target_url} for login..."
             self._notify_dashboard()
             
-            if await self._navigate_to_site(game_url):
+            if self.browser_manager.navigate_to_game(target_url):
                 self.stats.status = AgentStatus.CONNECTED
-                self.stats.active_tables = 1
-                self.stats.last_action = "Connected to Club WPT Gold"
+                self.stats.last_action = "🎯 Please log in and select a poker table, then agent will take over"
                 self._notify_dashboard()
                 
-                # Start network monitoring
-                asyncio.create_task(self._start_network_monitoring())
+                # Initialize network interceptor for when user is ready
+                self.network_interceptor = ClubWPTNetworkInterceptor(int(self.player_id))
+                self.network_interceptor.set_game_state_callback(self._handle_network_message)
                 
-                # Start main game loop
+                # Wait for user to complete login and table selection
                 self.is_running = True
+                await self._wait_for_user_ready()
+                
+                # Once user is ready, start network monitoring and game loop
+                asyncio.create_task(self._start_network_monitoring())
                 await self._main_game_loop()
             else:
                 self.stats.status = AgentStatus.ERROR
-                self.stats.last_action = "Failed to navigate to poker site"
+                self.stats.last_action = "Failed to open browser or navigate to site"
                 self._notify_dashboard()
                 
         except Exception as e:
@@ -212,6 +207,50 @@ class WebPokerAgent(BaseAgent):
         except Exception as e:
             print(f"Error preparing game URL: {e}")
             return None
+    
+    async def _wait_for_user_ready(self):
+        """Wait for user to complete login and select a poker table."""
+        print("🎯 Waiting for user to complete login and table selection...")
+        self.stats.last_action = "⏳ Waiting for user login and table selection..."
+        self._notify_dashboard()
+        
+        while self.is_running:
+            try:
+                current_url = self.browser_manager.driver.current_url
+                
+                # Check if user is now at a game table (has token in URL)
+                if "clubwptgold.com/game/" in current_url and "token=" in current_url:
+                    print("✅ User has selected a table! Agent taking over...")
+                    
+                    # Extract token from current URL for network monitoring
+                    token = self.token_manager.extract_token_from_url(current_url)
+                    
+                    self.stats.status = AgentStatus.PLAYING
+                    self.stats.last_action = "🤖 Agent taking control of gameplay"
+                    self.stats.active_tables = 1
+                    self._notify_dashboard()
+                    
+                    return  # Exit waiting loop, proceed to game loop
+                
+                # Check if user is still on main site or login pages
+                elif "clubwptgold.com" in current_url:
+                    # User is still navigating the site
+                    await asyncio.sleep(2)  # Check every 2 seconds
+                    continue
+                else:
+                    # User navigated away from the site
+                    print(f"⚠️ User navigated away from Club WPT Gold: {current_url}")
+                    self.stats.last_action = "⚠️ User navigated away from poker site"
+                    self._notify_dashboard()
+                    await asyncio.sleep(5)  # Wait longer if they navigated away
+                    continue
+                    
+            except Exception as e:
+                print(f"Error checking user status: {e}")
+                await asyncio.sleep(2)
+        
+        # If we exit the loop, agent was stopped
+        print("🛑 Agent stopped while waiting for user")
     
     async def _navigate_to_site(self, url: str) -> bool:
         """Navigate to poker site with human-like behavior."""
