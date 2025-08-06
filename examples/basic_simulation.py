@@ -3,8 +3,8 @@
 Basic poker simulation example using the holdem engine.
 """
 
-from src.holdem.game import Card, Deck, GameState, Player, Action, ActionType, Rank, Suit
-from src.holdem.agents import RandomAgent
+from holdem.game import Card, Deck, GameState, Player, Action, ActionType, Rank, Suit
+from holdem.agents import RandomAgent
 
 
 def create_test_players():
@@ -72,15 +72,19 @@ def simulate_hand():
 
 def test_hand_evaluation():
     """Test hand evaluation with known cards."""
-    print("=== Testing Hand Evaluation ===")
+    print("=== Testing Enhanced Hand Evaluation ===")
     
-    from src.holdem.game import Hand, HandRank
+    from holdem.game import Hand, HandRank
     
-    # Test cases
+    # Test cases including edge cases
     test_hands = [
         # Royal flush
         [Card(Rank.ACE, Suit.SPADES), Card(Rank.KING, Suit.SPADES), 
          Card(Rank.QUEEN, Suit.SPADES), Card(Rank.JACK, Suit.SPADES), Card(Rank.TEN, Suit.SPADES)],
+        
+        # Wheel straight flush (should be 5-high, not ace-high)
+        [Card(Rank.ACE, Suit.HEARTS), Card(Rank.TWO, Suit.HEARTS), 
+         Card(Rank.THREE, Suit.HEARTS), Card(Rank.FOUR, Suit.HEARTS), Card(Rank.FIVE, Suit.HEARTS)],
         
         # Four of a kind
         [Card(Rank.ACE, Suit.SPADES), Card(Rank.ACE, Suit.HEARTS), 
@@ -90,21 +94,32 @@ def test_hand_evaluation():
         [Card(Rank.KING, Suit.SPADES), Card(Rank.KING, Suit.HEARTS), 
          Card(Rank.KING, Suit.CLUBS), Card(Rank.QUEEN, Suit.DIAMONDS), Card(Rank.QUEEN, Suit.SPADES)],
         
-        # High card
-        [Card(Rank.ACE, Suit.SPADES), Card(Rank.JACK, Suit.HEARTS), 
-         Card(Rank.NINE, Suit.CLUBS), Card(Rank.SEVEN, Suit.DIAMONDS), Card(Rank.FIVE, Suit.SPADES)],
+        # Two pair with kicker
+        [Card(Rank.ACE, Suit.SPADES), Card(Rank.ACE, Suit.HEARTS), 
+         Card(Rank.KING, Suit.CLUBS), Card(Rank.KING, Suit.DIAMONDS), Card(Rank.QUEEN, Suit.SPADES)],
     ]
     
-    expected_ranks = [HandRank.ROYAL_FLUSH, HandRank.FOUR_OF_A_KIND, HandRank.FULL_HOUSE, HandRank.HIGH_CARD]
-    
-    for i, (cards, expected) in enumerate(zip(test_hands, expected_ranks)):
+    for i, cards in enumerate(test_hands):
         hand = Hand(cards)
         evaluation = hand.evaluate()
         print(f"Hand {i+1}: {[str(card) for card in cards]}")
-        print(f"  Evaluation: {evaluation.rank.name}")
-        print(f"  Expected: {expected.name}")
-        print(f"  Correct: {evaluation.rank == expected}")
+        print(f"  {hand.describe_best_hand()}")
+        if evaluation.rank == HandRank.STRAIGHT_FLUSH and evaluation.primary_value == 5:
+            print(f"  ✓ Wheel straight flush correctly valued at 5 (not 14)")
         print()
+    
+    # Test 7-card hand evaluation
+    print("7-Card Hand Test:")
+    seven_cards = [
+        Card(Rank.ACE, Suit.SPADES), Card(Rank.KING, Suit.HEARTS),
+        Card(Rank.QUEEN, Suit.CLUBS), Card(Rank.JACK, Suit.DIAMONDS), 
+        Card(Rank.TEN, Suit.SPADES), Card(Rank.TWO, Suit.HEARTS),
+        Card(Rank.THREE, Suit.CLUBS)
+    ]
+    seven_hand = Hand(seven_cards)
+    print(f"  Cards: {[str(card) for card in seven_cards]}")
+    print(f"  Best hand: {seven_hand.describe_best_hand()}")
+    print()
 
 
 if __name__ == "__main__":

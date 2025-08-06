@@ -5,7 +5,7 @@ Demo of web-based stealth poker agent.
 
 import os
 import time
-from src.holdem.web import BrowserManager, HumanBehaviorSimulator
+from holdem.web import BrowserManager, HumanBehaviorSimulator
 
 
 def demo_stealth_behavior():
