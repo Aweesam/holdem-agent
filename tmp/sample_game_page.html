@@ -1,0 +1,101 @@
+
+   <!-- Google Tag Manager (noscript) -->
+   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5647F756" height="0" width="0"
+    style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+   
+  <div id="Cocos2dGameContainer" style="transform: rotate(0deg); width: 1889px; height: 713px; margin: 0px; padding: 0px;"><canvas id="GameCanvas" oncontextmenu="event.preventDefault()" tabindex="99" class="gameCanvas" width="1988" height="750" style="width: 1889px; height: 713px; cursor: default;"></canvas><iframe allow="geolocation; autoplay; camera; microphone; fullscreen; accelerometer; magnetometer; gyroscope; picture-in-picture; accelerometer; microphone; bluetooth; payment;" style="border: medium; height: 810px; width: 1180px; overflow: scroll; visibility: hidden; position: absolute; bottom: 0px; left: 0px; transform: matrix(1.52586, 0, 0, 1.52586, 1.13687e-13, -1.13687e-13); transform-origin: 0px 100% 0px; opacity: 1;" src="about:blank"></iframe><input tabindex="0" style="display: none; border: 0px; background: transparent; width: 578px; height: 81.7px; outline: none; padding: 0px; text-transform: none; position: absolute; bottom: 0px; left: 2px; appearance: textfield; transform: matrix(0.804655, 0, 0, 0.804655, 717.387, -611.417); transform-origin: 0px 100% 0px;" class="cocosEditBox" id="EditBoxId_4" type="text"><input tabindex="0" style="display: none; border: 0px; background: transparent; width: 212px; height: 64px; outline: none; padding: 0px; text-transform: none; position: absolute; bottom: 0px; left: 2px; appearance: textfield; transform: matrix(0.463867, 0, 0, 0.463867, 1779.13, -86.9334); transform-origin: 0px 100% 0px;" class="cocosEditBox" id="EditBoxId_5" type="text"></div>
+  <div id="splash" style="display: none;">
+  </div>
+
+  <script src="src/settings.5af99.js" charset="utf-8"></script>
+  <script src="main.56169.js" charset="utf-8"></script>
+
+  <!-- Global Site Tag (gtag.js) -->
+  <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=G-D363P4P3T2"></script> -->
+
+  <script type="text/javascript">
+    (function () {
+      // open web debugger console
+      if (typeof VConsole !== 'undefined') {
+        window.vConsole = new VConsole();
+      }
+
+      var debug = window._CCSettings.debug;
+
+      // Config Global Site Tag
+      if (!debug) {
+        console.log('gtag.js set arguments');
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-D363P4P3T2');
+        // 如果存在网络问题造成加载gtag.js失败，导致页面表现不正常，可以用此种方式替换可以避免问题
+        window.addEventListener('load', function () {
+          console.log('gtag.js loading');
+          var domScript = document.createElement('script');
+          domScript.async = true;
+          domScript.src = "https://www.googletagmanager.com/gtag/js?id=G-D363P4P3T2";
+          document.body.appendChild(domScript);
+        })
+      }
+
+      // const isMobile = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|Windows Phone/i.test(navigator.userAgent) || /iPhone|iPad|iPod|Android/i.test(navigator.platform);
+      const bootFunc = () => {
+        window.boot();
+      };
+
+      var splash = document.getElementById('splash');
+      splash.style.display = 'block';
+
+      function loadScript(moduleName, cb) {
+        function scriptLoaded() {
+          document.body.removeChild(domScript);
+          domScript.removeEventListener('load', scriptLoaded, false);
+          cb && cb();
+        };
+        var domScript = document.createElement('script');
+        domScript.async = true;
+        domScript.src = moduleName;
+        domScript.addEventListener('load', scriptLoaded, false);
+        document.body.appendChild(domScript);
+      }
+
+      var wakeLock = null;
+      async function requestWakeLock() {
+          try {
+              wakeLock = await navigator.wakeLock.request('screen');
+              wakeLock.addEventListener('release', () => {
+              });
+          } catch (err) {
+              console.error(`${err.name}, ${err.message}`);
+          }
+      }
+      requestWakeLock();
+      document.addEventListener('click', () => {     
+        if (wakeLock !== null) {
+              requestWakeLock();
+          }
+      })
+      document.addEventListener('visibilitychange', async () => {
+          if (wakeLock !== null && document.visibilityState === 'visible') {
+              await requestWakeLock();
+          }
+      });
+
+
+      loadScript(debug ? 'cocos2d-js.js' : 'cocos2d-js-min.d0da7.js', function () {
+        if (CC_PHYSICS_BUILTIN || CC_PHYSICS_CANNON) {
+          loadScript(debug ? 'physics.js' : 'physics-min.js', bootFunc);
+        }
+        else {
+          bootFunc();
+        }
+      });
+    })();
+  </script>
+
+
+
+<script defer="" src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon="{&quot;rayId&quot;:&quot;96b0d1b6fb09c657&quot;,&quot;serverTiming&quot;:{&quot;name&quot;:{&quot;cfExtPri&quot;:true,&quot;cfEdge&quot;:true,&quot;cfOrigin&quot;:true,&quot;cfL4&quot;:true,&quot;cfSpeedBrain&quot;:true,&quot;cfCacheStatus&quot;:true}},&quot;version&quot;:&quot;2025.7.0&quot;,&quot;token&quot;:&quot;badba3b236754acbad43d8423e71fc42&quot;}" crossorigin="anonymous"></script>
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-D363P4P3T2"></script><style type="text/css">@font-face { font-family:AvertaCyrillicRegular_LABEL; src:url('assets/common/native/a0/a0c14a08-5fa9-49fd-9dc5-04a76fcb7a77.30c42/AvertaCyrillicRegular.ttf');}</style><div style="font-family: AvertaCyrillicRegular_LABEL; position: absolute; left: -100px; top: -100px;">.</div><style type="text/css">@font-face { font-family:AvertaCY-SemiB_LABEL; src:url('assets/common/native/49/4973a462-4cf7-4ff5-8414-bf706f39d009.16138/AvertaCY-SemiB.ttf');}</style><div style="font-family: AvertaCY-SemiB_LABEL; position: absolute; left: -100px; top: -100px;">.</div><style type="text/css">@font-face { font-family:Montserrat_Medium_LABEL; src:url('assets/texas-common/native/e8/e80910db-20e6-46c2-a4ce-668662a748af.2a5bc/Montserrat_Medium.ttf');}</style><div style="font-family: Montserrat_Medium_LABEL; position: absolute; left: -100px; top: -100px;">.</div><style type="text/css">@font-face { font-family:Montserrat_Bold_LABEL; src:url('assets/texas-common/native/1c/1c02c3cd-5e29-4a9c-b39f-4d5994fa0e39.bf3e5/Montserrat_Bold.ttf');}</style><div style="font-family: Montserrat_Bold_LABEL; position: absolute; left: -100px; top: -100px;">.</div><style type="text/css">@font-face { font-family:SFProDisplay_SemiBold_LABEL; src:url('assets/common/native/56/56ada337-62a4-4846-b82d-ea3bde38078c.5893d/SFProDisplay_SemiBold.ttf');}</style><div style="font-family: SFProDisplay_SemiBold_LABEL; position: absolute; left: -100px; top: -100px;">.</div><style type="text/css">@font-face { font-family:AvertaCY-Bold_LABEL; src:url('assets/texas-common/native/3d/3d4e6821-3d2a-4aa4-ae33-ec80356de5d2.a227c/AvertaCY-Bold.ttf');}</style><div style="font-family: AvertaCY-Bold_LABEL; position: absolute; left: -100px; top: -100px;">.</div>

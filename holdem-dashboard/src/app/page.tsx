@@ -5,6 +5,7 @@ import StatsCard from '@/components/StatsCard';
 import PerformanceChart from '@/components/PerformanceChart';
 import RecentHands from '@/components/RecentHands';
 import LiveStats from '@/components/LiveStats';
+import AgentControl from '@/components/AgentControl';
 import { useWebSocket } from '@/hooks/useWebSocket';
 
 export default function Dashboard() {
@@ -91,21 +92,28 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Charts and Live Data */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Performance Chart</h2>
-          <PerformanceChart />
+      {/* Agent Control */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1">
+          <AgentControl isConnected={isConnected} />
         </div>
         
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Live Statistics</h2>
-          <LiveStats 
-            hourlyRate={stats.hourlyRate}
-            currentSession={stats.currentSession}
-            sessionTime={stats.sessionTime}
-          />
+        <div className="lg:col-span-2">
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Live Statistics</h2>
+            <LiveStats 
+              hourlyRate={stats.hourlyRate}
+              currentSession={stats.currentSession}
+              sessionTime={stats.sessionTime}
+            />
+          </div>
         </div>
+      </div>
+
+      {/* Performance Chart */}
+      <div className="bg-white p-6 rounded-lg shadow">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Performance Chart</h2>
+        <PerformanceChart />
       </div>
 
       {/* Recent Hands */}
