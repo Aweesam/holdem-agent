@@ -5,6 +5,7 @@ A Python toolkit for building Texas Hold'em poker agents with stealth web intera
 ## Features
 
 - **Complete Poker Engine**: Full Texas Hold'em game logic with hand evaluation, betting rounds, and game state management
+- **Real-time Dashboard**: Modern web interface for monitoring agent performance with live statistics and charts
 - **Stealth Web Automation**: Human-like browser interaction to avoid detection
 - **Agent Framework**: Extensible agent system for different poker strategies
 - **Human Behavior Simulation**: Realistic timing, mouse movements, and decision patterns
@@ -25,9 +26,14 @@ holdem/
 │       ├── browser_manager.py    # Browser automation
 │       ├── human_behavior.py     # Human behavior simulation
 │       └── stealth_agent.py      # Web-based poker agent
-├── examples/           # Demo and test scripts
-├── tests/             # Unit tests
-└── docs/              # Documentation
+├── holdem-dashboard/   # Real-time monitoring dashboard
+│   ├── src/           # Next.js frontend components
+│   └── package.json   # Frontend dependencies
+├── api_server.py      # FastAPI backend for dashboard
+├── start_dashboard.py # Auto-start script for dashboard
+├── examples/          # Demo and test scripts
+├── tests/            # Unit tests
+└── docs/             # Documentation
 ```
 
 ## Installation
@@ -40,11 +46,31 @@ pip install -e .
 ### Dependencies
 
 - Python 3.9+
+- Node.js and npm (for dashboard)
 - Selenium WebDriver
 - Chrome/Chromium browser
 - ChromeDriver
 
 ## Quick Start
+
+### Dashboard Monitoring
+
+Launch the real-time dashboard to monitor agent performance:
+
+```bash
+# Auto-start both API server and frontend
+python start_dashboard.py
+
+# Access dashboard at http://localhost:3000
+```
+
+Features:
+- Real-time statistics and performance metrics
+- Live hand history and results
+- Interactive profit/loss charts
+- WebSocket updates every 3 seconds
+
+See [DASHBOARD_README.md](DASHBOARD_README.md) for detailed setup instructions.
 
 ### Basic Poker Simulation
 
@@ -100,6 +126,9 @@ with BrowserManager(headless=False) as browser:
 ### Running Examples
 
 ```bash
+# Launch dashboard for real-time monitoring
+python start_dashboard.py
+
 # Basic poker simulation
 python examples/basic_simulation.py
 
@@ -140,6 +169,7 @@ Please use responsibly and in accordance with applicable terms of service and re
 
 ## Roadmap
 
+- [x] Real-time dashboard with performance monitoring
 - [ ] Advanced poker agents (GTO, exploitative)
 - [ ] Site-specific game state parsers
 - [ ] Machine learning integration
