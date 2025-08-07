@@ -14,6 +14,12 @@ import os
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 
+from holdem.utils.logging_config import setup_logger, setup_exception_logging
+
+# Setup logging
+logger = setup_logger(__name__, 'api')  # Using 'api' since this is also an API server
+setup_exception_logging(logger)
+
 # Add src to path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 
@@ -24,7 +30,7 @@ app = FastAPI(title="Live Holdem Agent API", version="2.0.0")
 # Enable CORS for the NextJS frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["http://localhost:3000", "http://localhost:3001"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

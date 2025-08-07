@@ -4,6 +4,10 @@ Real-time API server for holdem agent statistics.
 Provides WebSocket and HTTP endpoints for the dashboard.
 """
 
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -13,6 +17,12 @@ import time
 import random
 from typing import List, Dict, Any
 from datetime import datetime, timedelta
+
+from holdem.utils.logging_config import setup_logger, setup_exception_logging
+
+# Setup logging
+logger = setup_logger(__name__, 'api')
+setup_exception_logging(logger)
 
 app = FastAPI(title="Holdem Agent API", version="1.0.0")
 
@@ -226,7 +236,10 @@ async def background_stats_updater():
 # Start background task
 @app.on_event("startup")
 async def startup_event():
+    logger.info("Starting Holdem Agent API server")
+    logger.info(f"Log level: {logger.level}")
     asyncio.create_task(background_stats_updater())
+    logger.info("Background stats updater started")
 
 # HTTP Endpoints
 @app.get("/api/stats")
@@ -261,6 +274,8 @@ async def websocket_endpoint(websocket: WebSocket):
     """WebSocket endpoint for real-time updates."""
     await websocket.accept()
     agent_state.websocket_connections.append(websocket)
+    client_addr = websocket.client.host if websocket.client else "unknown"
+    logger.info(f"WebSocket client connected from {client_addr}. Total connections: {len(agent_state.websocket_connections)}")
     
     try:
         # Send initial data
@@ -273,20 +288,28 @@ async def websocket_endpoint(websocket: WebSocket):
             }
         }
         await websocket.send_text(json.dumps(initial_data))
+        logger.debug(f"Sent initial data to client {client_addr}")
         
         # Keep connection alive
         while True:
             # Wait for client messages (optional)
             try:
                 message = await asyncio.wait_for(websocket.receive_text(), timeout=1.0)
-                # Handle client messages if needed
+                logger.debug(f"Received message from {client_addr}: {message}")
             except asyncio.TimeoutError:
                 # Send ping to keep connection alive
                 await websocket.send_text(json.dumps({"type": "ping"}))
             
     except WebSocketDisconnect:
         agent_state.websocket_connections.remove(websocket)
+        logger.info(f"WebSocket client {client_addr} disconnected. Remaining connections: {len(agent_state.websocket_connections)}")
+    except Exception as e:
+        logger.error(f"WebSocket error with client {client_addr}: {e}")
+        if websocket in agent_state.websocket_connections:
+            agent_state.websocket_connections.remove(websocket)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
+    port = int(os.getenv('HOLDEM_API_PORT', 8000))
+    logger.info(f"Starting API server on port {port}")
+    uvicorn.run(app, host="0.0.0.0", port=port, log_level="warning")  # Set uvicorn to warning to avoid duplicate logs

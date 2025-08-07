@@ -9,19 +9,22 @@ import sys
 import os
 import time
 import signal
+import webbrowser
 from pathlib import Path
 
 def start_api_server():
-    """Start the FastAPI server."""
-    print("🚀 Starting API server on port 8000...")
-    cmd = ["python", "api_server.py"]
+    """Start the Live Agent FastAPI server."""
+    print("🚀 Starting Live Agent server on port 8000...")
+    cmd = ["python", "live_agent_server.py"]
     return subprocess.Popen(cmd, cwd="/home/envy/holdem")
 
 def start_nextjs_server():
     """Start the NextJS development server."""
-    print("🚀 Starting NextJS dashboard on port 3000...")
+    print("🚀 Starting NextJS dashboard...")
     cmd = ["npm", "run", "dev"]
-    return subprocess.Popen(cmd, cwd="/home/envy/holdem/holdem-dashboard")
+    return subprocess.Popen(cmd, cwd="/home/envy/holdem/holdem-dashboard", 
+                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT, 
+                          universal_newlines=True, bufsize=1)
 
 def main():
     print("🎰 Starting Holdem Agent Dashboard System")
@@ -39,13 +42,51 @@ def main():
         nextjs_process = start_nextjs_server()
         processes.append(nextjs_process)
         
+        # Monitor Next.js output to find the actual port
+        frontend_url = None
+        print("⏳ Waiting for Next.js to start...")
+        
+        # Read Next.js output to find the port
+        start_time = time.time()
+        while time.time() - start_time < 30:  # 30 second timeout
+            if nextjs_process.poll() is not None:
+                print("❌ NextJS server failed to start")
+                break
+                
+            line = nextjs_process.stdout.readline()
+            if line:
+                print(f"   {line.strip()}")
+                if "Local:" in line and "http://localhost:" in line:
+                    # Extract the URL from the line
+                    import re
+                    match = re.search(r'http://localhost:(\d+)', line)
+                    if match:
+                        port = match.group(1)
+                        frontend_url = f"http://localhost:{port}"
+                        break
+                        
+        if not frontend_url:
+            frontend_url = "http://localhost:3000"  # fallback
+            
         print("\n✅ Both servers started successfully!")
         print("\n📊 Dashboard URLs:")
-        print("   - Frontend: http://localhost:3000")
+        print(f"   - Frontend: {frontend_url}")
         print("   - API: http://localhost:8000")
         print("   - API Docs: http://localhost:8000/docs")
         print("\n🔄 Real-time updates via WebSocket: ws://localhost:8000/ws")
         print("\n💡 Press Ctrl+C to stop all servers")
+        
+        # Open Firefox with the correct URL
+        time.sleep(2)
+        print("\n🌐 Opening dashboard in Firefox...")
+        try:
+            # Set Firefox as the preferred browser and open the dashboard
+            webbrowser.register('firefox', webbrowser.BackgroundBrowser('/usr/bin/firefox'))
+            webbrowser.get('firefox').open(frontend_url)
+            print(f"✅ Opened {frontend_url} in Firefox")
+        except Exception as e:
+            print(f"⚠️  Could not open Firefox automatically: {e}")
+            print(f"   Please manually open {frontend_url} in your browser")
         
         # Wait for processes
         while True:

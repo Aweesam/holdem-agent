@@ -1,16 +1,46 @@
 'use client';
 
 import { Activity, DollarSign, TrendingUp, Users, RefreshCw } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import StatsCard from '@/components/StatsCard';
 import PerformanceChart from '@/components/PerformanceChart';
 import RecentHands from '@/components/RecentHands';
 import LiveStats from '@/components/LiveStats';
 import AgentControl from '@/components/AgentControl';
 import { useWebSocket } from '@/hooks/useWebSocket';
+import { dashboardLogger } from '@/lib/logger';
 
 export default function Dashboard() {
   const { data, isConnected, error, reconnect } = useWebSocket('ws://localhost:8000/ws');
+
+  // Log dashboard lifecycle events
+  useEffect(() => {
+    dashboardLogger.component('Dashboard', 'mounted');
+    return () => {
+      dashboardLogger.component('Dashboard', 'unmounted');
+    };
+  }, []);
+
+  // Log connection status changes
+  useEffect(() => {
+    dashboardLogger.info(`WebSocket connection status: ${isConnected ? 'connected' : 'disconnected'}`, {
+      isConnected,
+      hasData: !!data,
+      error
+    });
+  }, [isConnected, error]);
+
+  // Log data updates
+  useEffect(() => {
+    if (data) {
+      dashboardLogger.debug('Dashboard data updated', {
+        totalHands: data.stats.total_hands,
+        totalProfit: data.stats.total_profit,
+        recentHandsCount: data.recent_hands.length,
+        performancePointsCount: data.performance.length
+      });
+    }
+  }, [data]);
 
   // Memoize stats to prevent unnecessary re-calculations
   const stats = useMemo(() => {

@@ -1,0 +1,52 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.pytest_cache/
+
+# Node.js (for dashboard)
+holdem-dashboard/node_modules/
+holdem-dashboard/.next/
+holdem-dashboard/out/
+holdem-dashboard/.env*.local
+
+# Logs (will be mounted as volume)
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp files
+tmp/
+temp/
+.tmp/
+
+# Test files
+test_*.py
+*_test.py
+tests/__pycache__/
+
+# Documentation
+docs/
+*.md
+LICENSE

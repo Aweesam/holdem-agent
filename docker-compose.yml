@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  holdem-api:
+    build: .
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_FORMAT=${LOG_FORMAT:-standard}
+      - HOLDEM_API_PORT=${HOLDEM_API_PORT:-8000}
+      - HOLDEM_DASHBOARD_PORT=${HOLDEM_DASHBOARD_PORT:-3000}
+    volumes:
+      - ./logs:/app/logs
+      - ./src:/app/src
+    ports:
+      - "${HOLDEM_API_PORT:-8000}:${HOLDEM_API_PORT:-8000}"
+    networks:
+      - holdem-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${HOLDEM_API_PORT:-8000}/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      
+  holdem-dashboard:
+    build: 
+      context: ./holdem-dashboard
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - DASH_LOG_LEVEL=${DASH_LOG_LEVEL:-info}
+      - NEXT_PUBLIC_API_URL=http://holdem-api:${HOLDEM_API_PORT:-8000}
+      - PORT=3000
+    volumes:
+      - ./logs:/app/logs
+    ports:
+      - "${HOLDEM_DASHBOARD_PORT:-3000}:3000"
+    depends_on:
+      - holdem-api
+    networks:
+      - holdem-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  holdem-network:
+    driver: bridge
+
+volumes:
+  logs:
+    driver: local

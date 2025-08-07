@@ -17,6 +17,10 @@ from .browser_manager import BrowserManager
 from .human_behavior import HumanBehaviorSimulator
 from .network_interceptor import ClubWPTNetworkInterceptor, GameStateParser, GameStateMessage
 from .token_manager import ClubWPTTokenManager, TokenExtractor
+from ..utils.logging_config import setup_logger
+
+# Setup logging
+logger = setup_logger(__name__, 'agent')
 
 
 class AgentStatus(Enum):

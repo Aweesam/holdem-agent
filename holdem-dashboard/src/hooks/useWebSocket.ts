@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { dashboardLogger } from '@/lib/logger';
 
 interface AgentStats {
   total_hands: number;
@@ -60,7 +61,7 @@ export function useWebSocket(url: string): UseWebSocketReturn {
       const websocket = new WebSocket(url);
       
       websocket.onopen = () => {
-        console.log('WebSocket connected');
+        dashboardLogger.websocket('connected', { url });
         setIsConnected(true);
         setError(null);
       };
@@ -72,32 +73,44 @@ export function useWebSocket(url: string): UseWebSocketReturn {
           if (message.type === 'initial_data' || message.type === 'stats_update') {
             if (message.data) {
               setData(message.data);
+              dashboardLogger.websocket('data_received', { 
+                type: message.type,
+                hands: message.data.stats.total_hands,
+                profit: message.data.stats.total_profit
+              });
             }
           } else if (message.type === 'ping') {
             // Handle ping message
-            console.log('Received ping from server');
+            dashboardLogger.debug('Received ping from server');
           }
         } catch (error) {
-          console.error('Error parsing WebSocket message:', error);
+          const errorString = error instanceof Error ? error.message : String(error);
+          dashboardLogger.error('Error parsing WebSocket message', { error: errorString, url });
           setError('Error parsing server message');
         }
       };
 
       websocket.onclose = (event) => {
-        console.log('WebSocket disconnected:', event.code, event.reason);
+        dashboardLogger.websocket('disconnected', { 
+          url, 
+          code: event.code, 
+          reason: event.reason,
+          wasClean: event.wasClean
+        });
         setIsConnected(false);
         
         // Attempt to reconnect after 3 seconds
         setTimeout(() => {
           if (!event.wasClean) {
-            console.log('Attempting to reconnect...');
+            dashboardLogger.websocket('attempting_reconnect', { url });
             connect();
           }
         }, 3000);
       };
 
       websocket.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        const errorString = error instanceof Error ? error.message : String(error);
+        dashboardLogger.error('WebSocket error', { error: errorString, url });
         setError('Connection error occurred');
         setIsConnected(false);
       };
@@ -105,7 +118,8 @@ export function useWebSocket(url: string): UseWebSocketReturn {
       setWs(websocket);
       
     } catch (error) {
-      console.error('Failed to create WebSocket connection:', error);
+      const errorString = error instanceof Error ? error.message : String(error);
+      dashboardLogger.error('Failed to create WebSocket connection', { error: errorString, url });
       setError('Failed to connect to server');
     }
   }, [url]);

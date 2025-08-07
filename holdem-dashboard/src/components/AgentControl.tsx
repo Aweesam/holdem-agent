@@ -22,7 +22,7 @@ export default function AgentControl({ isConnected }: AgentControlProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [siteUrl, setSiteUrl] = useState('https://clubwptgold.com/');
   const [headless, setHeadless] = useState(false); // False for manual login
-  const [token, setToken] = useState('');
+  const [token] = useState('');
   const [showSettings, setShowSettings] = useState(false);
 
   // Poll agent status
@@ -31,7 +31,7 @@ export default function AgentControl({ isConnected }: AgentControlProps) {
       if (!isConnected) return;
       
       try {
-        const response = await fetch('/api/agent/status');
+        const response = await fetch('http://localhost:8000/api/agent/status');
         if (response.ok) {
           const status = await response.json();
           setAgentStatus(status);
@@ -51,7 +51,7 @@ export default function AgentControl({ isConnected }: AgentControlProps) {
     setIsLoading(true);
     
     try {
-      const response = await fetch('/api/agent/control', {
+      const response = await fetch('http://localhost:8000/api/agent/control', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
