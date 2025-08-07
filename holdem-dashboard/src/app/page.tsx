@@ -1,6 +1,7 @@
 'use client';
 
 import { Activity, DollarSign, TrendingUp, Users, RefreshCw } from 'lucide-react';
+import { useMemo } from 'react';
 import StatsCard from '@/components/StatsCard';
 import PerformanceChart from '@/components/PerformanceChart';
 import RecentHands from '@/components/RecentHands';
@@ -11,24 +12,31 @@ import { useWebSocket } from '@/hooks/useWebSocket';
 export default function Dashboard() {
   const { data, isConnected, error, reconnect } = useWebSocket('ws://localhost:8000/ws');
 
-  // Use WebSocket data if available, otherwise fallback to defaults
-  const stats = data ? {
-    totalHands: data.stats.total_hands,
-    winRate: data.stats.win_rate,
-    totalProfit: data.stats.total_profit,
-    currentSession: data.stats.current_session,
-    hourlyRate: data.stats.hourly_rate,
-    activeTables: data.stats.active_tables,
-    sessionTime: data.stats.session_time,
-  } : {
-    totalHands: 0,
-    winRate: 0,
-    totalProfit: 0,
-    currentSession: 0,
-    hourlyRate: 0,
-    activeTables: 0,
-    sessionTime: 0,
-  };
+  // Memoize stats to prevent unnecessary re-calculations
+  const stats = useMemo(() => {
+    return data ? {
+      totalHands: data.stats.total_hands,
+      winRate: data.stats.win_rate,
+      totalProfit: data.stats.total_profit,
+      currentSession: data.stats.current_session,
+      hourlyRate: data.stats.hourly_rate,
+      activeTables: data.stats.active_tables,
+      sessionTime: data.stats.session_time,
+    } : {
+      totalHands: 0,
+      winRate: 0,
+      totalProfit: 0,
+      currentSession: 0,
+      hourlyRate: 0,
+      activeTables: 0,
+      sessionTime: 0,
+    };
+  }, [data]);
+
+  // Memoize performance data to prevent unnecessary re-renders
+  const performanceData = useMemo(() => {
+    return data?.performance;
+  }, [data?.performance]);
 
   return (
     <div className="space-y-6">
@@ -113,7 +121,7 @@ export default function Dashboard() {
       {/* Performance Chart */}
       <div className="bg-white p-6 rounded-lg shadow">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Performance Chart</h2>
-        <PerformanceChart />
+        <PerformanceChart data={performanceData} />
       </div>
 
       {/* Recent Hands */}

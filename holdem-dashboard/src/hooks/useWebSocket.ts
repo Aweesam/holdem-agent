@@ -126,7 +126,8 @@ export function useWebSocket(url: string): UseWebSocketReturn {
         ws.close();
       }
     };
-  }, [connect]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [url]); // Only depend on url to avoid infinite reconnection loops
 
   return {
     data,
